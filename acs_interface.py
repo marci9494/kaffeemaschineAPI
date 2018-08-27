@@ -63,28 +63,14 @@ def get_status_for_order(order_id):
     # Fake: Hier wird der Status von der Kaffemaschine geholt und zurückgeliefert,
     # das sollte natürlich der Status des gewünschten Entries sein ....       
     acs_response = get_status_from_acs()
-    msg = {}
-    msg["id"] = order_id
-    msg["beverage"] = 1
-    msg["state"] = acs_response
-    msg["when"] = "24.07.2018 13:54.37"
-    return msg
+    orderID = request.args.get('orderID')
+    for entry in queue:
+        if(str(orderID) == str(entry['orderID'])):
+            return entry
+            break
 
 def get_status_for_all_orders():
-    content = []
-    entry = {}
-    entry["id"] = "4711"
-    entry["beverage"] = 1
-    entry["state"] = "isRunning"
-    entry["when"] = "24.07.2018 13:54.37"
-    content.append(entry)
-    entry = {}
-    entry["id"] = "4712"
-    entry["beverage"] = 2
-    entry["state"] = "waiting"
-    entry["when"] = "24.07.2018 13:54.48"
-    content.append(entry)
-    return content
+    return queue
      
     
 @app.route('/orderBeverage')
@@ -121,6 +107,33 @@ def orderBeverage():
         response.set_cookie("order_id",str(order_id))
     return response
 
+@app.route('/updateBeverage')
+def updateBeverage():
+    userID = request.args.get('userID')
+    for entry in queue:
+        if(str(userID) == str(entry['userID'])):
+            entry['productID'] = request.args.get('uuid')
+            entry['deliveryDate'] = request.args.get('deliveryDate')
+            status = '[{„status“ : „True“}]'
+            sort_queue()
+            break
+        else:
+            status = '[{„status“ : „False“}]'
+        return status
+
+@app.route('/deleteBeverage')
+def deleteBeverage():
+    userID = request.args.get('userID')
+    for entry in queue:
+        if(str(userID) == str(entry['userID'])):
+            queue.remove(entry)
+            status = '[{„status“ : „True“}]'
+            sort_queue
+            break
+        else:
+            status = '[{„status“ : „False“}]'
+    return status
+
 def sort_queue():
     queue.sort(key=lambda x: datetime.datetime.strptime(x['deliveryDate'], '%Y-%m-%dT%H:%M:%S'))
     print (queue)
@@ -128,7 +141,7 @@ def sort_queue():
 
 @app.route('/getStatus')
 def getStatus():
-    order_id = request.args.get('order_id')
+    order_id = request.args.get('orderID')
     if (order_id != None):
         msg = get_status_for_order(order_id) 
         response = Response(
