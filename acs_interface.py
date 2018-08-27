@@ -15,6 +15,8 @@ import sys
 
 import time
 
+queue = []
+
 # Die id für die nächste Bestellung
 # Achtung, bei Neustart nicht eindeutig, sollte persistent gemacht werden ...
 acs_next_order = 4711
@@ -30,7 +32,8 @@ app = Flask(__name__)
 
 @app.route('/listBeverages')
 def list_beverages():
-    return '[{"name": "Espresso", "id": 1},{"name": "Cappuccino", "id": 2},{"name": "Cafe Creme", "id": 3},{"name": "Latte Macchiato", "id": 4},{"name": "Milch-Choc", "id": 5},{"name": "Milchkaffee", "id": 6}, {"name": "Chociatto", "id": 7},{"name": "Milchschaum", "id": 8}]'
+   return '[{"name": "Espresso", "id": 1},{"name": "Cappuccino", "id": 2},{"name": "Cafe Creme", "id": 3},{"name": "Latte Macchiato", "id": 4},{"name": "Milch-Choc", "id": 5},{"name": "Milchkaffee", "id": 6}, {"name": "Chociatto", "id": 7},{"name": "Milchschaum", "id": 8}]'
+   # return queue
 
 
 # Fragt den Status der Kaffemaschine ab und liefert den als String zurück
@@ -81,7 +84,10 @@ def get_status_for_all_orders():
 @app.route('/orderBeverage')
 def orderBeverage():
     global acs_next_order
-    beverage = request.args.get('id')
+    beverage = request.args.get('productID')
+    user = request.args.get('userID')
+    date = request.args.get('deliveryDate')
+
     if (beverage == None):
         log_message("Kein Getränk angegeben")
         response = Response(
@@ -92,6 +98,13 @@ def orderBeverage():
     else:
         order_id = acs_next_order
         acs_next_order += 1
+        entry = {}
+        entry["orderID"] = order_id
+        entry["productID"] = beverage
+        entry["userID"] = user
+        entry["deliveryDate"] = date
+        queue.append(entry)
+        print(queue)
         log_message("Starting Beverage " + str(order_id))
         response = Response(
             response=json.dumps(order_id),
@@ -120,6 +133,11 @@ def getStatus():
             mimetype='application/json'
         )
     return response
+
+@app.route('/getEstimatedTime')
+def getEstimatedTime():
+    estimatedTime = '30'
+    return estimatedTime
 
 
 @app.route('/')
