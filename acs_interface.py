@@ -33,7 +33,13 @@ app = Flask(__name__)
 @app.route('/listBeverages')
 def list_beverages():
    return '[{"name": "Espresso", "id": 1},{"name": "Cappuccino", "id": 2},{"name": "Cafe Creme", "id": 3},{"name": "Latte Macchiato", "id": 4},{"name": "Milch-Choc", "id": 5},{"name": "Milchkaffee", "id": 6}, {"name": "Chociatto", "id": 7},{"name": "Milchschaum", "id": 8}]'
-   # return queue
+
+@app.route('/getQueue')
+def getQueue():
+    stringliste = ''
+    for entry in queue:
+        stringliste = stringliste + str(entry)
+    return stringliste
 
 
 # Fragt den Status der Kaffemaschine ab und liefert den als String zurück
@@ -87,7 +93,7 @@ def orderBeverage():
     beverage = request.args.get('productID')
     user = request.args.get('userID')
     date = request.args.get('deliveryDate')
-
+    
     if (beverage == None):
         log_message("Kein Getränk angegeben")
         response = Response(
@@ -99,12 +105,12 @@ def orderBeverage():
         order_id = acs_next_order
         acs_next_order += 1
         entry = {}
+        entry["deliveryDate"] = date
         entry["orderID"] = order_id
         entry["productID"] = beverage
         entry["userID"] = user
-        entry["deliveryDate"] = date
         queue.append(entry)
-        print(queue)
+        sort_queue()
         log_message("Starting Beverage " + str(order_id))
         response = Response(
             response=json.dumps(order_id),
@@ -114,6 +120,11 @@ def orderBeverage():
         
         response.set_cookie("order_id",str(order_id))
     return response
+
+def sort_queue():
+    queue.sort(key=lambda x: datetime.datetime.strptime(x['deliveryDate'], '%Y-%m-%dT%H:%M:%S'))
+    print (queue)
+    return 0
 
 @app.route('/getStatus')
 def getStatus():
@@ -136,8 +147,12 @@ def getStatus():
 
 @app.route('/getEstimatedTime')
 def getEstimatedTime():
-    estimatedTime = '30'
-    return estimatedTime
+    orderID = request.args.get('orderID')
+    counter = 1
+    estimatedTime = 0
+    estimatedTime = queue.index(orderID) * 30
+    print(queue.index(orderID))            
+    return str(estimatedTime)
 
 
 @app.route('/')
