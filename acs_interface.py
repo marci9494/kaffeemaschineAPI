@@ -15,7 +15,7 @@ import sys
 
 import time
 
-queue = []
+queue = [{'deliveryDate': '2004-06-14T23:34:30', 'orderID': 4711, 'productID': '4', 'userID': '4-bla'}, {'deliveryDate': '2014-06-14T23:34:30', 'orderID': 4712, 'productID': '4', 'userID': '4-bla'}, {'deliveryDate': '2015-06-14T23:34:30', 'orderID': 4713, 'productID': '4', 'userID': '4-bla'}, {'deliveryDate': '2018-06-14T23:34:30', 'orderID': 4714, 'productID': '4', 'userID': '4-bla'}]
 
 # Die id für die nächste Bestellung
 # Achtung, bei Neustart nicht eindeutig, sollte persistent gemacht werden ...
@@ -150,8 +150,13 @@ def getEstimatedTime():
     orderID = request.args.get('orderID')
     counter = 1
     estimatedTime = 0
-    estimatedTime = queue.index(orderID) * 30
-    print(queue.index(orderID))            
+    for entry in queue:
+        if (str(entry['orderID']) == str(orderID)):
+            estimatedTime = counter * 30
+            break
+        else:
+            counter += 1
+    #estimatedTime = queue.index(orderID) * 30            
     return str(estimatedTime)
 
 
