@@ -173,5 +173,16 @@ def getEstimatedTime():
 def index():
     return "<html><body><h1>Simulator für die App-Schnittstelle, services unter /orderBeverage und /getStatus </html></body>"
 
+@app.route('/monitor')
+def monitoring():
+    monitor = "Kaffeemaschiene ist nicht erreichbar!"
+    if(getQueue() == 0 ):
+        queue = "Queue ist Leer!"
+    else:
+        queue = "Die Queue hat " + getQueue().count() + " Einträge!"
+    states = {'ready': "Die Kaffeemaschiene ist bereit!", 'isRunning': "Die Kaffeemaschiene arbeitet!", 'waiting' :"Die Kaffeemaschiene wartet!"}
+    monitor = states.get(get_status_from_acs())
+    return monitor + " " + queue
+
 if __name__ == '__main__':
     app.run(debug=True)
