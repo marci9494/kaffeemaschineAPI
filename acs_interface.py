@@ -83,16 +83,23 @@ def orderBeverage():
     uuid = '5945c961-e74d-478f-8afe-da53cf4189e3'
     date = request.args.get('deliveryDate')
     date_now = time.strftime("%Y-%m-%dT%H:%M:%S")
-    dateobj = time.strptime(date, "%Y-%m-%dT%H:%M:%S")
 
-    # Zeitdifferenz, wenn mehr als 15 Sek in Vergangenheit -> aktuelle Zeit eintragen
 
-    
-    
     if(date == None):
         date = date_now
-    
-    
+    else:
+        dateobj = time.strptime(date, "%Y-%m-%dT%H:%M:%S")
+        
+    # Zeitdifferenz, wenn mehr als 15 Sek in Vergangenheit -> aktuelle Zeit eintragen
+
+        dt1 = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S")
+        dt2 = datetime.datetime.strptime(date_now, "%Y-%m-%dT%H:%M:%S")
+
+        d = dt2 - dt1
+
+        if(d.days>=0):
+            if(d.seconds>= 15):
+                date = date_now
     
     if (beverage == None):
         log_message("Kein Getränk angegeben")
