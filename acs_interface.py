@@ -79,6 +79,7 @@ def orderBeverage():
     beverage = request.args.get('productID')
     user = request.args.get('userID')
     date = request.args.get('deliveryDate')
+    uuid = '5945c961-e74d-478f-8afe-da53cf4189e3'
     
     if (beverage == None):
         log_message("Kein Getränk angegeben")
@@ -92,14 +93,14 @@ def orderBeverage():
         acs_next_order += 1
         entry = {}
         entry["deliveryDate"] = date
-        entry["orderID"] = order_id
         entry["productID"] = beverage
         entry["userID"] = user
+        entry["uuid"] = uuid
         queue.append(entry)
         sort_queue()
         log_message("Starting Beverage " + str(order_id))
         response = Response(
-            response=json.dumps(order_id),
+            response=json.dumps(uuid),
             status=200,
             mimetype='application/json'
         )
@@ -112,7 +113,7 @@ def updateBeverage():
     userID = request.args.get('userID')
     for entry in queue:
         if(str(userID) == str(entry['userID'])):
-            entry['productID'] = request.args.get('uuid')
+            entry['productID'] = request.args.get('productID')
             entry['deliveryDate'] = request.args.get('deliveryDate')
             status = '[{„status“ : „True“}]'
             sort_queue()
