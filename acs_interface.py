@@ -221,36 +221,6 @@ def feedbackJubilaeum():
     light = requests.post("http://localhost:8000/sendCommand?cmd=SetLight(000,255,0)")
     time.sleep(0.5)
     light = requests.post("http://localhost:8000/sendCommand?cmd=SetLight(80,199,0)")
-    return ""def feedbackMonitoring(error):
-    sound = requests.post("http://localhost:8000/sendCommand?cmd=Speak'"+ str(error) +"'")
-    light = requests.post("http://localhost:8000/sendCommand?cmd=SetLight(110,0,0)")
     return ""
-
-def feedbackStatus(light_id):
-    if (light_id == "1"): #Status isrunning
-        light = requests.post("http://localhost:8000/sendCommand?cmd=SetLight(80,255,0)") #grüner RGB-Wert
-    else: #Status fertig und bereit
-        light = requests.post("http://localhost:8000/sendCommand?cmd=SetLight(255,255,000)") #orangener RGB-Wert
-    return ""
-
-#Funktion wird von der Queue aufgerufen, wenn der Kaffe produziert wird
-def feedbackCafeReady():
-    cafeTime = 30.0
-    time.sleep(cafeTime)
-    sound = requests.post("http://localhost:8000/sendCommand?cmd=Speak'Ihr Kaffee ist fertig'")
-    return ""z
-
-#Funktion wird von der Quue aufgerufen, wenn der 100. Kaffee gestartet wird
-def feedbackJubilaeum():
-    sound = requests.post("http://localhost:8000/sendCommand?cmd=Speak'Juhu! hundertster Kaffee'")
-    light = requests.post("http://localhost:8000/sendCommand?cmd=SetLight(255,255,000)") #gelber RGB-Wert
-    time.sleep(0.5)
-    light = requests.post("http://localhost:8000/sendCommand?cmd=SetLight(110,0,0)") #pinkener RGB-Wert
-    time.sleep(0.5)
-    light = requests.post("http://localhost:8000/sendCommand?cmd=SetLight(000,255,0)")
-    time.sleep(0.5)
-    light = requests.post("http://localhost:8000/sendCommand?cmd=SetLight(80,199,0)")
-    return ""
-
 if __name__ == '__main__':
     app.run(debug=True)
