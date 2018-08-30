@@ -12,7 +12,7 @@ from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 import datetime
 import sys
-
+from loggingmodule import *
 import time
 
 queue = []
@@ -41,6 +41,13 @@ def getQueue():
         stringliste = stringliste + str(entry)
     return stringliste
 
+
+@app.route('/getDBInformation')
+def getDBInformation():
+    uuid = request.args.get('uuid')
+    log = loggingmodule.Loghandler()
+    returnwert = log.GetData(uuid)
+    return returnwert
 
 # Fragt den Status der Kaffemaschine ab und liefert den als String zurück
 def get_status_from_acs():
