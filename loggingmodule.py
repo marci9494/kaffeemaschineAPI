@@ -25,12 +25,31 @@ example:
 
 import sqlite3
 import datetime
-
+import json
 
 class Loghandler:
     def __init__(self):
         self.db = sqlite3.connect('data/db.sqlite3')
         self.cursor = self.db.cursor() 
+        
+    def GetData(self, uuid):
+        self.cursor.execute('''SELECT * FROM logs WHERE uuid = ?''', (uuid,))
+        result = self.cursor.fetchall() 
+        jsonresponse = {}
+        jsonresponse['uuid'] = result[0][0]
+        jsonresponse['toqueue'] = result[0][1]
+        jsonresponse['toqueuetime'] = result[0][2]
+        jsonresponse['tocoffeemachine'] = result[0][3]
+        jsonresponse['tocoffeemachinetime'] = result[0][4]
+        jsonresponse['tocustomer'] = result[0][5]
+        jsonresponse['tocustomertime'] = result[0][6]
+        jsonresponse['errorcode'] = result[0][7]
+        jsonresponse['errortext'] = result[0][10]
+        jsonresponse['coffee'] = result[0][8]
+        jsonresponse['quantity'] = result[0][9]
+        
+        jsonresponse = json.dumps(jsonresponse)
+        return(jsonresponse)
         
     def CreateDBEntry(self, uuid, toqueue, toqueuetime, tocoffeemachine, tocoffeemachinetime, tocustomer, tocustomertime, coffee, quantity, errorcode, errortext):
         self.cursor.execute('''INSERT INTO logs(uuid, toqueue, toqueuetime, tocoffeemachine, tocoffeemachinetime, tocustomer, tocustomertime, coffee, quantity, errorcode, errortext)
@@ -106,4 +125,15 @@ class Request:
         else:
             self.errortext = "Fehler vorhanden" #tbd
             
+    def SetToQueue(self, log):
+        self.toqueue = 1
+        log.submit(self)
+    
+    def SetToCoffeemachine(self, log):
+        self.tocoffeemachine = 1
+        log.submit(self)
+    
+    def SetToCustomer(self, log):
+        self.tocustomer = 1
+        log.submit(self)
             
