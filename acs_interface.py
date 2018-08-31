@@ -12,12 +12,16 @@ from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 import datetime
 from datetime import timedelta
+import uuid
+from threading import Thread
+import threading
 import sys
 
 import time
 
-queue = [{'deliveryDate': '2014-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e1'},{'deliveryDate': '2016-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e2'},{'deliveryDate': '2017-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e3'},{'deliveryDate': '2018-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e4'},{'deliveryDate': '2019-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e5'}]
-#queue = []
+
+#queue = [{'deliveryDate': '2014-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e1'},{'deliveryDate': '2016-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e2'},{'deliveryDate': '2017-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e3'},{'deliveryDate': '2018-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e4'},{'deliveryDate': '2019-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e5'}]
+queue = []
 
 # Die id für die nächste Bestellung
 # Achtung, bei Neustart nicht eindeutig, sollte persistent gemacht werden ...
@@ -25,10 +29,6 @@ acs_next_order = 4711
 
 # Die URL für den Status-Webservice der Kaffemaschine
 acs_status_url = "http://localhost:8000/getStatus"
-
-def log_message(txt):
-    print(txt)
-
 
 app = Flask(__name__)
 
@@ -73,33 +73,16 @@ def get_status_for_order(order_id):
 
 def get_status_for_all_orders():
     return queue
-     
     
 @app.route('/orderBeverage')
 def orderBeverage():
     global acs_next_order
     beverage = request.args.get('productID')
-    user = request.args.get('userID')
-    uuid = '5945c961-e74d-478f-8afe-da53cf4189e3'
+#    user = request.args.get('userID')
+#    uuid = '5945c961-e74d-478f-8afe-da53cf4189e3'
     date = request.args.get('deliveryDate')
-    date_now = time.strftime("%Y-%m-%dT%H:%M:%S")
 
-
-    if(date == None):
-        date = date_now
-    else:
-        dateobj = time.strptime(date, "%Y-%m-%dT%H:%M:%S")
-        
-    # Zeitdifferenz, wenn mehr als 15 Sek in Vergangenheit -> aktuelle Zeit eintragen
-
-        dt1 = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S")
-        dt2 = datetime.datetime.strptime(date_now, "%Y-%m-%dT%H:%M:%S")
-
-        d = dt2 - dt1
-
-        if(d.days>=0):
-            if(d.seconds>= 15):
-                date = date_now
+    p_uuid = str(uuid.uuid4())
     
     if (beverage == None):
         log_message("Kein Getränk angegeben")
@@ -112,15 +95,15 @@ def orderBeverage():
 #       order_id = acs_next_order
 #       acs_next_order += 1
         entry = {}
-        entry["deliveryDate"] = date
+        entry["deliveryDate"] = get_deliveryDate(date)
         entry["productID"] = beverage
-        entry["userID"] = user
-        entry["uuid"] = uuid 
+#        entry["userID"] = user
+        entry["uuid"] = p_uuid 
         queue.append(entry)
         sort_queue()
-        log_message("Starting Beverage " + str(uuid))
+        log_message("Starting Beverage " + str(p_uuid))
         msg = {}
-        msg["uuid"] = uuid
+        msg["uuid"] = p_uuid
         response = Response(
             response=json.dumps(msg),
             status=200,
@@ -133,11 +116,12 @@ def orderBeverage():
 @app.route('/updateBeverage')
 def updateBeverage():
     uuid = request.args.get('uuid')
+    date = request.args.get('deliveryDate')
     msg = {}
     for entry in queue:
         if(str(uuid) == str(entry['uuid'])):
             entry['productID'] = request.args.get('productID')
-            entry['deliveryDate'] = request.args.get('deliveryDate')
+            entry['deliveryDate'] = get_deliveryDate(date)
             msg['status'] = "True"
             response = Response(
                 response=json.dumps(msg),
@@ -154,6 +138,26 @@ def updateBeverage():
                 mimetype='application/json'
             )
     return response
+
+def get_deliveryDate(date):
+    date_now = time.strftime("%Y-%m-%dT%H:%M:%S")
+    if(date == None):
+        date = date_now
+    else:
+        dateobj = time.strptime(date, "%Y-%m-%dT%H:%M:%S")
+        
+    # Zeitdifferenz, wenn mehr als 15 Sek in Vergangenheit -> aktuelle Zeit eintragen
+
+        dt1 = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S")
+        dt2 = datetime.datetime.strptime(date_now, "%Y-%m-%dT%H:%M:%S")
+
+        d = dt2 - dt1
+
+        if(d.days>=0):
+            if(d.seconds>= 15):
+                date = date_now
+    return date
+     
 
 @app.route('/deleteBeverage')
 def deleteBeverage():
@@ -227,6 +231,11 @@ def getEstimatedTime():
             mimetype='application/json'
         )          
     return response
+
+
+def log_message(txt):
+    print(txt)
+
 
 
 @app.route('/')
