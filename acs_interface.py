@@ -11,13 +11,14 @@ from flask import request, render_template, redirect
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 import datetime
+import uuid
 from datetime import timedelta
 import sys
 from loggingmodule import *
 import time
 
 
-queue = [{'deliveryDate': '2014-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e1'},{'deliveryDate': '2016-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e2'},{'deliveryDate': '2017-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e3'},{'deliveryDate': '2018-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e4'},{'deliveryDate': '2019-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e5'}]
+queue = []
 
 
 # Die id für die nächste Bestellung
@@ -88,7 +89,7 @@ def orderBeverage():
     global acs_next_order
     beverage = request.args.get('productID')
     user = request.args.get('userID')
-    uuid = '5945c961-e74d-478f-8afe-da53cf4189e3'
+    orderUuid = str(uuid.uuid4())
     date = request.args.get('deliveryDate')
     date_now = time.strftime("%Y-%m-%dT%H:%M:%S")
 
@@ -123,12 +124,12 @@ def orderBeverage():
         entry["deliveryDate"] = date
         entry["productID"] = beverage
         entry["userID"] = user
-        entry["uuid"] = uuid 
+        entry["uuid"] = orderUuid 
         queue.append(entry)
         sort_queue()
-        log_message("Starting Beverage " + str(uuid))
+        log_message("Starting Beverage " + str(orderUuid))
         msg = {}
-        msg["uuid"] = uuid
+        msg["uuid"] = orderUuid
         response = Response(
             response=json.dumps(msg),
             status=200,
