@@ -18,6 +18,8 @@ import threading
 import sys
 from loggingmodule import *
 import time
+from flask_cors import CORS, cross_origin
+
 
 
 #queue = [{'deliveryDate': '2014-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e1'},{'deliveryDate': '2016-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e2'},{'deliveryDate': '2017-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e3'},{'deliveryDate': '2018-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e4'},{'deliveryDate': '2019-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e5'}]
@@ -32,11 +34,13 @@ acs_next_order = 4711
 acs_status_url = "http://localhost:8000/getStatus"
 
 app = Flask(__name__)
+CORS(app)
+
 
 @app.route('/listBeverages')
 def list_beverages():
-   return '[{"name": "Espresso", "id": 1},{"name": "Cappuccino", "id": 2},{"name": "Cafe Creme", "id": 3},{"name": "Latte Macchiato", "id": 4},{"name": "Milch-Choc", "id": 5},{"name": "Milchkaffee", "id": 6}, {"name": "Chociatto", "id": 7},{"name": "Milchschaum", "id": 8}]'
-
+    return'[{"name": "Espresso", "id": 1},{"name": "Cappuccino", "id": 2},{"name": "Cafe Creme", "id": 3},{"name": "Latte Macchiato", "id": 4},{"name": "Milch-Choc", "id": 5},{"name": "Milchkaffee", "id": 6}, {"name": "Chociatto", "id": 7},{"name": "Milchschaum", "id": 8}]'
+   
 @app.route('/getQueue')
 def getQueue():
     stringliste = ''
@@ -72,7 +76,7 @@ def get_status_from_acs():
 def get_status_for_order(order_id):
     # Fake: Hier wird der Status von der Kaffemaschine geholt und zurückgeliefert,
     # das sollte natürlich der Status des gewünschten Entries sein ....       
-    acs_response = get_status_from_acs()
+    #acs_response = get_status_from_acs()
     uuid = request.args.get('uuid')
     for entry in queue:
         if(str(uuid) == str(entry['uuid'])):
