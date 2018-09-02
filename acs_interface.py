@@ -24,6 +24,7 @@ from flask_cors import CORS, cross_origin
 
 #queue = [{'deliveryDate': '2014-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e1'},{'deliveryDate': '2016-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e2'},{'deliveryDate': '2017-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e3'},{'deliveryDate': '2018-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e4'},{'deliveryDate': '2019-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e5'}]
 queue = []
+maschiene_url: "http://localhost:8000"
 
 
 # Die id für die nächste Bestellung
@@ -31,7 +32,7 @@ queue = []
 acs_next_order = 4711
 
 # Die URL für den Status-Webservice der Kaffemaschine
-acs_status_url = "http://localhost:8000/getStatus"
+acs_status_url = maschiene_url + "/getStatus"
 
 app = Flask(__name__)
 CORS(app)
@@ -273,36 +274,36 @@ def monitoring():
 
 #feedback:
 def feedbackMonitoring(error):
-    sound = requests.post("http://localhost:8000/sendCommand?cmd=Speak'"+ str(error) +"'")
-    light = requests.post("http://localhost:8000/sendCommand?cmd=SetLight(110,0,0)")
+    sound = requests.post(maschiene_url + "/sendCommand?cmd=Speak'"+ str(error) +"'")
+    light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(110,0,0)")
     return ""
 
 def feedbackStatus(status):
     if (status == 'ready'): #Status isrunning
-        light = requests.post("http://localhost:8000/sendCommand?cmd=SetLight(80,255,0)") #grüner RGB-Wert
+        light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(80,255,0)") #grüner RGB-Wert
     elif (status == 'isRunning'): #Status fertig und bereit
-        light = requests.post("http://localhost:8000/sendCommand?cmd=SetLight(255,255,000)") #orangener RGB-Wert
+        light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(255,255,000)") #orangener RGB-Wert
     elif (status == 'waiting'):  # Status fertig und bereit
-        light = requests.post("http://localhost:8000/sendCommand?cmd=SetLight(255,255,000)") #orangener RGB-Wert
+        light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(255,255,000)") #orangener RGB-Wert
     return ""
 
 #Funktion wird von der Queue aufgerufen, wenn der Kaffe produziert wird
 def feedbackCafeReady():
     cafeTime = 30.0
     time.sleep(cafeTime)
-    sound = requests.post("http://localhost:8000/sendCommand?cmd=Speak'Ihr Kaffee ist fertig'")
+    sound = requests.post(maschiene_url + "/sendCommand?cmd=Speak'Ihr Kaffee ist fertig'")
     return ""
 
 #Funktion wird von der Quue aufgerufen, wenn der 100. Kaffee gestartet wird
 def feedbackJubilaeum():
-    sound = requests.post("http://localhost:8000/sendCommand?cmd=Speak'Juhu! hundertster Kaffee'")
-    light = requests.post("http://localhost:8000/sendCommand?cmd=SetLight(255,255,000)") #gelber RGB-Wert
+    sound = requests.post(maschiene_url + "/sendCommand?cmd=Speak'Juhu! hundertster Kaffee'")
+    light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(255,255,000)") #gelber RGB-Wert
     time.sleep(0.5)
-    light = requests.post("http://localhost:8000/sendCommand?cmd=SetLight(110,0,0)") #pinkener RGB-Wert
+    light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(110,0,0)") #pinkener RGB-Wert
     time.sleep(0.5)
-    light = requests.post("http://localhost:8000/sendCommand?cmd=SetLight(000,255,0)")
+    light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(000,255,0)")
     time.sleep(0.5)
-    light = requests.post("http://localhost:8000/sendCommand?cmd=SetLight(80,199,0)")
+    light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(80,199,0)")
     return ""
 if __name__ == '__main__':
     app.run(debug=True)
