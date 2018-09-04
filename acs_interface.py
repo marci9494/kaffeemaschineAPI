@@ -19,6 +19,7 @@ import sys
 from loggingmodule import *
 import time
 from flask_cors import CORS, cross_origin
+import requests
 
 
 
@@ -281,10 +282,10 @@ def feedbackMonitoring(error):
 def feedbackStatus(status):
     if (status == 'ready'): #Status isrunning
         light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(80,255,0)") #grüner RGB-Wert
-    elif (status == 'isRunning'): #Status fertig und bereit
+    elif (status == 'isRunning'): 
         light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(255,255,000)") #orangener RGB-Wert
-    elif (status == 'waiting'):  # Status fertig und bereit
-        light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(255,255,000)") #orangener RGB-Wert
+    elif (status == 'waiting'): 
+        light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(0,255,000)") #gelb RGB-Wert
     return ""
 
 #Funktion wird von der Queue aufgerufen, wenn der Kaffe produziert wird
@@ -297,13 +298,13 @@ def feedbackCafeReady():
 #Funktion wird von der Quue aufgerufen, wenn der 100. Kaffee gestartet wird
 def feedbackJubilaeum():
     sound = requests.post(maschiene_url + "/sendCommand?cmd=Speak'Juhu! hundertster Kaffee'")
-    light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(255,255,000)") #gelber RGB-Wert
+    light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(255,255,000)") #orange RGB-Wert
     time.sleep(0.5)
-    light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(110,0,0)") #pinkener RGB-Wert
+    light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(110,0,0)") #Rot RGB-Wert
     time.sleep(0.5)
-    light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(000,255,0)")
+    light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(000,255,0)") #Gelber RGB-Wert
     time.sleep(0.5)
-    light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(80,199,0)")
+    light = requests.post(maschiene_url + "/sendCommand?cmd=SetLight(80,199,0)") #Gelb/Grüner RGB-Wert
     return ""
 if __name__ == '__main__':
     app.run(debug=True)
