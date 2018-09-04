@@ -35,21 +35,27 @@ class Loghandler:
     def GetData(self, uuid):
         self.cursor.execute('''SELECT * FROM logs WHERE uuid = ?''', (uuid,))
         result = self.cursor.fetchall() 
-        jsonresponse = {}
-        jsonresponse['uuid'] = result[0][0]
-        jsonresponse['toqueue'] = result[0][1]
-        jsonresponse['toqueuetime'] = result[0][2]
-        jsonresponse['tocoffeemachine'] = result[0][3]
-        jsonresponse['tocoffeemachinetime'] = result[0][4]
-        jsonresponse['tocustomer'] = result[0][5]
-        jsonresponse['tocustomertime'] = result[0][6]
-        jsonresponse['errorcode'] = result[0][7]
-        jsonresponse['errortext'] = result[0][10]
-        jsonresponse['coffee'] = result[0][8]
-        jsonresponse['quantity'] = result[0][9]
         
-        jsonresponse = json.dumps(jsonresponse)
-        return(jsonresponse)
+        if (len(result) == 0):
+            jsonresponse = {}
+            jsonresponse['content'] = 0
+            jsonresponse = json.dumps(jsonresponse)
+            return(jsonresponse)
+        else:
+            jsonresponse = {}
+            jsonresponse['uuid'] = result[0][0]
+            jsonresponse['toqueue'] = result[0][1]
+            jsonresponse['toqueuetime'] = result[0][2]
+            jsonresponse['tocoffeemachine'] = result[0][3]
+            jsonresponse['tocoffeemachinetime'] = result[0][4]
+            jsonresponse['tocustomer'] = result[0][5]
+            jsonresponse['tocustomertime'] = result[0][6]
+            jsonresponse['errorcode'] = result[0][7]
+            jsonresponse['errortext'] = result[0][10]
+            jsonresponse['coffee'] = result[0][8]
+            jsonresponse['quantity'] = result[0][9]
+            jsonresponse = json.dumps(jsonresponse)
+            return(jsonresponse)
         
     def CreateDBEntry(self, uuid, toqueue, toqueuetime, tocoffeemachine, tocoffeemachinetime, tocustomer, tocustomertime, coffee, quantity, errorcode, errortext):
         self.cursor.execute('''INSERT INTO logs(uuid, toqueue, toqueuetime, tocoffeemachine, tocoffeemachinetime, tocustomer, tocustomertime, coffee, quantity, errorcode, errortext)
@@ -87,20 +93,12 @@ class Loghandler:
         self.cursor.execute('''SELECT uuid FROM logs WHERE uuid = ?''', (robject.uuid,))
         result = self.cursor.fetchall() 
         robject = self.SetTimes(robject)
-        
-            
-        
         robject.CreateErrortext()
-        coffee = 0
-        quantity = 0
-        #coffee,quantity erstellen aus HTTPOBject TBD
-
-
 
         if (len(result) == 0):
-            self.CreateDBEntry(robject.uuid, robject.toqueue, robject.toqueuetime, robject.tocoffeemachine, robject.tocoffeemachinetime, robject.tocustomer, robject.tocustomertime, coffee, quantity, robject.errorcode, robject.errortext) 
+            self.CreateDBEntry(robject.uuid, robject.toqueue, robject.toqueuetime, robject.tocoffeemachine, robject.tocoffeemachinetime, robject.tocustomer, robject.tocustomertime, robject.coffee, robject.quantity, robject.errorcode, robject.errortext) 
         else:
-            self.UpdateDBEntry(robject.uuid, robject.toqueue, robject.toqueuetime, robject.tocoffeemachine, robject.tocoffeemachinetime, robject.tocustomer, robject.tocustomertime, coffee, quantity, robject.errorcode, robject.errortext)
+            self.UpdateDBEntry(robject.uuid, robject.toqueue, robject.toqueuetime, robject.tocoffeemachine, robject.tocoffeemachinetime, robject.tocustomer, robject.tocustomertime, robject.coffee, robject.quantity, robject.errorcode, robject.errortext)
             
         
 class Request:
