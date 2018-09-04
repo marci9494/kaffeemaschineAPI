@@ -54,7 +54,7 @@ def getQueue():
 @app.route('/getDBInformation')
 def getDBInformation():
     uuid = request.args.get('uuid')
-    log = loggingmodule.Loghandler()
+    log = Loghandler()
     returnwert = log.GetData(uuid)
     return returnwert
 
