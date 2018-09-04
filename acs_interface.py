@@ -15,10 +15,24 @@ from datetime import timedelta
 import sys
 from loggingmodule import *
 import time
+import uuid
+import requests
+import queue as Q
+from threading import Thread
 
-
-queue = [{'deliveryDate': '2014-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e1'},{'deliveryDate': '2016-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e2'},{'deliveryDate': '2017-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e3'},{'deliveryDate': '2018-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e4'},{'deliveryDate': '2019-06-14T23:34:30', 'productID': '4', 'userID': '4-bla', 'uuid': '5945c961-e74d-478f-8afe-da53cf4189e5'}]
-
+class Drainer(object):
+  def __init__(self, q):
+    self.q = q
+  def __iter__(self):
+    while True:
+      try:
+        yield self.q.get_nowait()
+      except Exception as e:
+        print(e)  # on python 2 use Queue.Empty
+        break
+# Set up some global variables
+num_fetch_threads = 1
+enclosure_queue = Q.PriorityQueue()
 
 # Die id für die nächste Bestellung
 # Achtung, bei Neustart nicht eindeutig, sollte persistent gemacht werden ...
@@ -33,22 +47,26 @@ def log_message(txt):
 
 app = Flask(__name__)
 
+
+
+
 @app.route('/listBeverages')
 def list_beverages():
    return '[{"name": "Espresso", "id": 1},{"name": "Cappuccino", "id": 2},{"name": "Cafe Creme", "id": 3},{"name": "Latte Macchiato", "id": 4},{"name": "Milch-Choc", "id": 5},{"name": "Milchkaffee", "id": 6}, {"name": "Chociatto", "id": 7},{"name": "Milchschaum", "id": 8}]'
 
+
 @app.route('/getQueue')
 def getQueue():
     stringliste = ''
-    for entry in queue:
-        stringliste = stringliste + str(entry)
+    # for entry in queue:
+    #    stringliste = stringliste + str(entry)
     return stringliste
 
 
 @app.route('/getDBInformation')
 def getDBInformation():
     uuid = request.args.get('uuid')
-    log = loggingmodule.Loghandler()
+    log = Loghandler()
     returnwert = log.GetData(uuid)
     return returnwert
 
@@ -70,17 +88,18 @@ def get_status_from_acs():
     return status
 
 def get_status_for_order(order_id):
-    # Fake: Hier wird der Status von der Kaffemaschine geholt und zurückgeliefert,
-    # das sollte natürlich der Status des gewünschten Entries sein ....       
-    acs_response = get_status_from_acs()
-    uuid = request.args.get('uuid')
-    for entry in queue:
-        if(str(uuid) == str(entry['uuid'])):
-            return entry
-            break
+    # Element aus Queue suchenn
+    for n in enclosure_queue.queue:
+        if(str(order_id) == str(n[1]['uuid'])):
+            return n[1]
 
 def get_status_for_all_orders():
-    return queue
+    all_elements = []
+    for n in enclosure_queue.queue:
+        # print(n)
+        all_elements.append(n[1])
+    return all_elements
+
      
     
 @app.route('/orderBeverage')
@@ -88,7 +107,8 @@ def orderBeverage():
     global acs_next_order
     beverage = request.args.get('productID')
     user = request.args.get('userID')
-    uuid = '5945c961-e74d-478f-8afe-da53cf4189e3'
+    # UUID für neue Bestellung erzeugen
+    orderid = uuid.uuid4()
     date = request.args.get('deliveryDate')
     date_now = time.strftime("%Y-%m-%dT%H:%M:%S")
 
@@ -123,12 +143,14 @@ def orderBeverage():
         entry["deliveryDate"] = date
         entry["productID"] = beverage
         entry["userID"] = user
-        entry["uuid"] = uuid 
-        queue.append(entry)
-        sort_queue()
-        log_message("Starting Beverage " + str(uuid))
+        entry["uuid"] = str(orderid) 
+        dt = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S")
+        #Calculate Priority based on timestamp
+        enclosure_queue.put((dt.timestamp(),entry))
+        #sort_queue()
+        log_message("Starting Beverage " + str(orderid))
         msg = {}
-        msg["uuid"] = uuid
+        msg["uuid"] = str(orderid)
         response = Response(
             response=json.dumps(msg),
             status=200,
@@ -138,58 +160,58 @@ def orderBeverage():
 #       response.set_cookie("order_id",str(order_id))
     return response
 
-@app.route('/updateBeverage')
+@app.route('/updateBeverage', methods=['GET'])
 def updateBeverage():
     uuid = request.args.get('uuid')
     msg = {}
-    for entry in queue:
-        if(str(uuid) == str(entry['uuid'])):
-            entry['productID'] = request.args.get('productID')
-            entry['deliveryDate'] = request.args.get('deliveryDate')
-            msg['status'] = "True"
-            response = Response(
-                response=json.dumps(msg),
-                status=200,
-                mimetype='application/json'
-            )
-            sort_queue()
-            break
-        else:
-            msg['status'] = "False"
-            response = Response(
-                response=json.dumps(msg),
-                status=404,
-                mimetype='application/json'
-            )
+    newQueue = Q.PriorityQueue()
+    global enclosure_queue
+    msg["status"] = "False"
+    for entry in enclosure_queue.queue:
+         if(str(uuid) == str(entry[1]['uuid'])):
+             entry[1]['productID'] = request.args.get('productID')
+             entry[1]['deliveryDate'] = request.args.get('deliveryDate')
+             entry[1]['userID'] = request.args.get('userID')
+             msg["status"] = "True"
+         dt = datetime.datetime.strptime(entry[1]['deliveryDate'], "%Y-%m-%dT%H:%M:%S")
+         print(dt, type(dt))
+         newQueue.put((dt.timestamp(), entry[1]))
+
+    response = Response(
+        response=json.dumps(msg),
+        status=404,
+        mimetype='application/json'
+    )
+    
+    # Workaround
+    enclosure_queue = newQueue
     return response
 
 @app.route('/deleteBeverage')
 def deleteBeverage():
     uuid = request.args.get('uuid')
     msg = {}
-    for entry in queue:
-        if(str(uuid) == str(entry['uuid'])):
-            queue.remove(entry)
-            msg["status"] = "True"
-            response = Response(
-                response=json.dumps(msg),
-                status=200,
-                mimetype='application/json'
-            )            
-            sort_queue
-            break
+    newQueue = Q.PriorityQueue()
+    global enclosure_queue
+    msg["status"] = "False"
+    for entry in enclosure_queue.queue:
+        if(str(uuid) != str(entry[1]['uuid'])):
+            dt = datetime.datetime.strptime(entry[1]['deliveryDate'], "%Y-%m-%dT%H:%M:%S")
+            newQueue.put((dt.timestamp(),entry[1]))
         else:
-            msg["status"] = "False"
-            response = Response(
-                response=json.dumps(msg),
-                status=404,
-                mimetype='application/json'
-            )
+            msg["status"] = "True"
+    response = Response(
+        response=json.dumps(msg),
+        status=200,
+        mimetype='application/json'
+    )
+    
+    # Workaround
+    enclosure_queue = newQueue
     return response
 
 def sort_queue():
-    queue.sort(key=lambda x: datetime.datetime.strptime(x['deliveryDate'], '%Y-%m-%dT%H:%M:%S'))
-    print (queue)
+    # queue.sort(key=lambda x: datetime.datetime.strptime(x['deliveryDate'], '%Y-%m-%dT%H:%M:%S'))
     return 0
 
 @app.route('/getStatus')
@@ -214,26 +236,22 @@ def getStatus():
 @app.route('/getEstimatedTime')
 def getEstimatedTime():
     uuid = request.args.get('uuid')
+    reply = json.dumps("No ID given")
     if(uuid != None):
         counter = 1
         estimatedTime = 0
-        for entry in queue:
-            if (str(entry['uuid']) == str(uuid)):
+        for n in enclosure_queue.queue:
+            if(str(uuid) == str(n[1]['uuid'])):
                 estimatedTime = counter * 30
-                response = Response(
-                    response=json.dumps(estimatedTime),
-                    status=200,
-                    mimetype='application/json'
-                )
+                reply = json.dumps(estimatedTime)
                 break
             else:
                 counter += 1
-    else:
-        response = Response(
-            response=json.dumps("No ID given"),
-            status=400,
-            mimetype='application/json'
-        )          
+    response = Response(
+        response=reply,
+        status=400,
+        mimetype='application/json'
+    )          
     return response
 
 
@@ -244,7 +262,7 @@ def index():
 #monitoring
 
 @app.route('/monitor')
-def monitoring():
+def monitor():
 
     if (getQueue() == 0):
         monitorqueue = "Die Queue ist Leer!"
@@ -291,5 +309,40 @@ def feedbackJubilaeum():
     time.sleep(0.5)
     light = requests.post("http://localhost:8000/sendCommand?cmd=SetLight(80,199,0)")
     return ""
+
+def coffeeLooper(q):
+    """This is the worker thread function.
+    It processes items in the queue one after
+    another.  These daemon threads go into an
+    infinite loop, and only exit when
+    the main thread ends.
+    """
+    while True:
+        for n in enclosure_queue.queue:
+            if datetime.datetime.strptime(n[1]['deliveryDate'], "%Y-%m-%dT%H:%M:%S") <= datetime.datetime.now():
+                order = q.get()
+                print("Working on order "+ order[1]['uuid'])
+                # TODO GetStatus ACS before firing 
+                u = "http://localhost:8000/sendCommand?cmd=StartBeverage("+order[1]['productID']+")"
+                requests.get(u)
+                time.sleep(50)
+                q.task_done()
+        time.sleep(1)
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Set up some threads to fetch the enclosures
+
+    for i in range(num_fetch_threads):
+        worker = Thread(target=coffeeLooper, args=(enclosure_queue,))
+        worker.setDaemon(True)
+        worker.start()
+
+    print('*** Main thread waiting')
+    enclosure_queue.join()
+
+    app.run(host='0.0.0.0', debug=True)
+    
+
+
+    
+    
