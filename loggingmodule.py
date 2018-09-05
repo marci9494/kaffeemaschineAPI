@@ -32,6 +32,28 @@ class Loghandler:
         self.db = sqlite3.connect('data/db.sqlite3')
         self.cursor = self.db.cursor() 
         
+    def GetObject(self, uuid):
+        self.cursor.execute('''SELECT * FROM logs WHERE uuid = ?''', (uuid,))
+        result = self.cursor.fetchall() 
+        
+        if (len(result) == 0):
+            return None
+        else:
+            robject = Request()
+            robject.uuid = uuid
+            robject.toqueue = result[0][1]
+            robject.toqueuetime = result[0][2]
+            robject.tocoffeemachine = result[0][3]
+            robject.tocoffeemachinetime = result[0][4]
+            robject.tocustomer = result[0][5]
+            robject.tocustomertime = result[0][6]
+            robject.errorcode = result[0][7]
+            robject.coffee = result[0][8]
+            robject.quantity = result[0][9]
+            robject.errortext = result[0][10]
+            return robject
+        
+        
     def GetData(self, uuid):
         self.cursor.execute('''SELECT * FROM logs WHERE uuid = ?''', (uuid,))
         result = self.cursor.fetchall() 
