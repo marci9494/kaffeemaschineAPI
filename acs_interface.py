@@ -19,6 +19,7 @@ import uuid
 import requests
 import queue as Q
 from threading import Thread
+from flask_cors import CORS, cross_origin
 
 # Set up some global variables
 num_fetch_threads = 1
@@ -36,7 +37,7 @@ def log_message(txt):
 
 
 app = Flask(__name__)
-
+CORS(app)
 
 
 
