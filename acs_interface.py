@@ -134,7 +134,19 @@ def orderBeverage():
         entry["deliveryDate"] = date
         entry["productID"] = beverage
         entry["userID"] = user
-        entry["uuid"] = str(orderid) 
+        entry["uuid"] = str(orderid)
+
+
+        log = Loghandler()
+        logeintrag = Request()
+        logeintrag.uuid = str(orderid)
+        logeintrag.coffee = int(beverage)
+        logeintrag.quantity = 1
+        logeintrag.errorcode = 0
+
+        log.submit(logeintrag)
+        logeintrag.SetToQueue(log)
+
         dt = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S")
         #Calculate Priority based on timestamp
         enclosure_queue.put((dt.timestamp(),entry))
@@ -170,7 +182,7 @@ def updateBeverage():
 
     response = Response(
         response=json.dumps(msg),
-        status=404,
+        status=200,
         mimetype='application/json'
     )
     
