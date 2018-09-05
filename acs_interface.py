@@ -145,11 +145,11 @@ def orderBeverage():
         logeintrag.errorcode = 0
 
         log.submit(logeintrag)
-        logeintrag.SetToQueue(log)
 
         dt = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S")
         #Calculate Priority based on timestamp
         enclosure_queue.put((dt.timestamp(),entry))
+        logeintrag.SetToQueue(log)
         #sort_queue()
         log_message("Starting Beverage " + str(orderid))
         msg = {}
@@ -179,6 +179,10 @@ def updateBeverage():
          dt = datetime.datetime.strptime(entry[1]['deliveryDate'], "%Y-%m-%dT%H:%M:%S")
          print(dt, type(dt))
          newQueue.put((dt.timestamp(), entry[1]))
+         log = Loghandler()
+         logeintrag = log.GetObject(uuid)
+         logeintrag.coffee = request.args.get('productID')
+         log.submit(logeintrag)
 
     response = Response(
         response=json.dumps(msg),
@@ -203,6 +207,11 @@ def deleteBeverage():
             newQueue.put((dt.timestamp(),entry[1]))
         else:
             msg["status"] = "True"
+    log = Loghandler()
+    logeintrag = log.GetObject(uuid)
+    logeintrag.errorcode = 1
+    log.submit(logeintrag)
+
     response = Response(
         response=json.dumps(msg),
         status=200,
@@ -252,7 +261,7 @@ def getEstimatedTime():
                 counter += 1
     response = Response(
         response=reply,
-        status=400,
+        status=200,
         mimetype='application/json'
     )          
     return response
@@ -320,6 +329,7 @@ def coffeeLooper(q):
     infinite loop, and only exit when
     the main thread ends.
     """
+    log = Loghandler()
     while True:
         for n in enclosure_queue.queue:
             if datetime.datetime.strptime(n[1]['deliveryDate'], "%Y-%m-%dT%H:%M:%S") <= datetime.datetime.now():
@@ -328,7 +338,11 @@ def coffeeLooper(q):
                 # TODO GetStatus ACS before firing 
                 u = "http://localhost:8000/sendCommand?cmd=StartBeverage("+order[1]['productID']+")"
                 requests.get(u)
+                logeintrag = log.GetObject(order[1]['uuid'])
+                logeintrag.SetToCoffeemachine(log)
+                #Sleep while machine is producing
                 time.sleep(50)
+                logeintrag.SetToCustomer(log)
                 q.task_done()
         time.sleep(1)
 
