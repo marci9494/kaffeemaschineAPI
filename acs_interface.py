@@ -247,18 +247,29 @@ def getStatus():
 
 @app.route('/getEstimatedTime')
 def getEstimatedTime():
+    #Zeiten für die einzelnen Getränke
+    time = {}
+    time[1] = 10
+    time[2] = 10
+    time[3] = 10
+    time[4] = 10
+    time[5] = 10
+    time[6] = 10
+    time[7] = 10
+    time[8] = 10
     uuid = request.args.get('uuid')
     reply = json.dumps("No ID given")
     if(uuid != None):
-        counter = 1
         estimatedTime = 0
         for n in enclosure_queue.queue:
             if(str(uuid) == str(n[1]['uuid'])):
-                estimatedTime = counter * 30
+                estimatedTime += time[int(n[1]['productID'])]
                 reply = json.dumps(estimatedTime)
                 break
             else:
-                counter += 1
+                #addiere Zeit für vorhergehende Getränke aus der Queue
+                estimatedTime += time[int(n[1]['productID'])]
+                    
     response = Response(
         response=reply,
         status=200,
@@ -329,12 +340,18 @@ def coffeeLooper(q):
     infinite loop, and only exit when
     the main thread ends.
     """
+    countCoffee = 0
     log = Loghandler()
     while True:
         for n in enclosure_queue.queue:
             if datetime.datetime.strptime(n[1]['deliveryDate'], "%Y-%m-%dT%H:%M:%S") <= datetime.datetime.now():
                 order = q.get()
                 print("Working on order "+ order[1]['uuid'])
+                feedbackCafeReady()
+                countCoffee +=1
+                if(countCoffee == 100):
+                    feedbackJubilaeum()
+                    countCoffee = 0
                 # TODO GetStatus ACS before firing 
                 u = "http://localhost:8000/sendCommand?cmd=StartBeverage("+order[1]['productID']+")"
                 requests.get(u)
