@@ -103,11 +103,11 @@ class Loghandler:
             tocustomertime = '0'
   
         if ( toqueuetime == '0' and robject.toqueue == 1 ):
-            robject.toqueuetime = str(datetime.datetime.utcnow()) +"Z"
+            robject.toqueuetime = str(datetime.datetime.utcnow().isoformat()) +"Z"
         if ( tocoffeemachinetime == '0' and robject.tocoffeemachine == 1 ):
-            robject.tocoffeemachinetime = str(datetime.datetime.utcnow()) +"Z"
+            robject.tocoffeemachinetime = str(datetime.datetime.utcnow().isoformat()) +"Z"
         if ( tocustomertime == '0' and robject.tocustomer == 1 ):
-            robject.tocustomertime = str(datetime.datetime.utcnow()) +"Z"
+            robject.tocustomertime = str(datetime.datetime.utcnow().isoformat()) +"Z"
         
         return(robject)
 
