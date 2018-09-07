@@ -249,14 +249,14 @@ def getStatus():
 def getEstimatedTime():
     #Zeiten für die einzelnen Getränke
     time = {}
-    time[1] = 10
-    time[2] = 10
-    time[3] = 10
-    time[4] = 10
-    time[5] = 10
-    time[6] = 10
-    time[7] = 10
-    time[8] = 10
+    time[1] = 30 #Espresso
+    time[2] = 31 #Capuccino
+    time[3] = 47 #Cafe Creme
+    time[4] = 49 #Latte Macchiato
+    time[5] = 24 #Milk-Choc
+    time[6] = 32 #Milchkaffee
+    time[7] = 43 #Chociatto
+    time[8] = 15 #Milchschaum
     uuid = request.args.get('uuid')
     reply = json.dumps("No ID given")
     if(uuid != None):
