@@ -32,6 +32,17 @@ acs_next_order = 4711
 # Die URL für den Status-Webservice der Kaffemaschine
 acs_status_url = "http://localhost:8000/getStatus"
 
+# Zeiten für die einzelnen Getränke
+beverageTimes = {}
+beverageTimes[1] = 30  # Espresso
+beverageTimes[2] = 31  # Capuccino
+beverageTimes[3] = 47  # Cafe Creme
+beverageTimes[4] = 49  # Latte Macchiato
+beverageTimes[5] = 24  # Milk-Choc
+beverageTimes[6] = 32  # Milchkaffee
+beverageTimes[7] = 43  # Chociatto
+beverageTimes[8] = 15  # Milchschaum
+
 def log_message(txt):
     print(txt)
 
@@ -247,28 +258,19 @@ def getStatus():
 
 @app.route('/getEstimatedTime')
 def getEstimatedTime():
-    #Zeiten für die einzelnen Getränke
-    time = {}
-    time[1] = 30 #Espresso
-    time[2] = 31 #Capuccino
-    time[3] = 47 #Cafe Creme
-    time[4] = 49 #Latte Macchiato
-    time[5] = 24 #Milk-Choc
-    time[6] = 32 #Milchkaffee
-    time[7] = 43 #Chociatto
-    time[8] = 15 #Milchschaum
+
     uuid = request.args.get('uuid')
     reply = json.dumps("No ID given")
     if(uuid != None):
         estimatedTime = 0
         for n in enclosure_queue.queue:
             if(str(uuid) == str(n[1]['uuid'])):
-                estimatedTime += time[int(n[1]['productID'])]
+                estimatedTime += beverageTimes[int(n[1]['productID'])]
                 reply = json.dumps(estimatedTime)
                 break
             else:
                 #addiere Zeit für vorhergehende Getränke aus der Queue
-                estimatedTime += time[int(n[1]['productID'])]
+                estimatedTime += beverageTimes[int(n[1]['productID'])]
                     
     response = Response(
         response=reply,
@@ -357,8 +359,8 @@ def coffeeLooper(q):
                 requests.get(u)
                 logeintrag = log.GetObject(order[1]['uuid'])
                 logeintrag.SetToCoffeemachine(log)
-                #Sleep while machine is producing
-                time.sleep(50)
+                #Sleep while machine is producing plus 5 seconds for changing the cup
+                time.sleep(beverageTimes[int(order[1]['productID'])] + 5)
                 logeintrag.SetToCustomer(log)
                 q.task_done()
         time.sleep(1)
