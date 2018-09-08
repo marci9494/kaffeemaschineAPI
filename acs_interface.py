@@ -319,8 +319,6 @@ def feedbackStatus(status):
 
 #Funktion feedbackCafeReady (wird von Queue aufgerufen)	
 def feedbackCafeReady():
-    cafeTime = 25.0
-    time.sleep(cafeTime)
     sound = requests.get("http://localhost:8000/sendCommand?cmd=Speak('Holsch-da-Kafffffee-isch-ferdig-buu')")
     return ""
 	
