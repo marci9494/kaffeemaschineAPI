@@ -328,19 +328,13 @@ def feedbackCafeReady():
 def feedbackJubilaeum():
     sound = requests.get("http://localhost:8000/sendCommand?cmd=Speak('Sauber-hundertschder-Kaffee-trungga')")
     light = requests.get("http://localhost:8000/sendCommand?cmd=SetLight(255,255,000)") #gelber RGB-Wert
-    time.sleep(0.5)
     light = requests.get("http://localhost:8000/sendCommand?cmd=SetLight(110,0,0)") #pinkener RGB-Wert
-    time.sleep(0.5)
     light = requests.get("http://localhost:8000/sendCommand?cmd=SetLight(000,255,0)")
-    time.sleep(0.5)
     light = requests.get("http://localhost:8000/sendCommand?cmd=SetLight(80,199,0)")
     
     light = requests.get("http://localhost:8000/sendCommand?cmd=SetLight(255,255,000)") #gelber RGB-Wert
-    time.sleep(0.5)
     light = requests.get("http://localhost:8000/sendCommand?cmd=SetLight(110,0,0)") #pinkener RGB-Wert
-    time.sleep(0.5)
     light = requests.get("http://localhost:8000/sendCommand?cmd=SetLight(000,255,0)")
-    time.sleep(0.5)
     light = requests.get("http://localhost:8000/sendCommand?cmd=SetLight(80,199,0)")
     return ""
 
@@ -359,7 +353,6 @@ def coffeeLooper(q):
             if datetime.datetime.strptime(n[1]['deliveryDate'], "%Y-%m-%dT%H:%M:%S") <= datetime.datetime.now():
                 order = q.get()
                 print("Working on order "+ order[1]['uuid'])
-                feedbackCafeReady()
                 countCoffee +=1
                 if(countCoffee == 100):
                     feedbackJubilaeum()
@@ -372,6 +365,7 @@ def coffeeLooper(q):
                 #Sleep while machine is producing plus 5 seconds for changing the cup
                 time.sleep(beverageTimes[int(order[1]['productID'])] + 5)
                 logeintrag.SetToCustomer(log)
+                feedbackCafeReady()
                 q.task_done()
         time.sleep(1)
 
