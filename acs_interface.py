@@ -192,8 +192,9 @@ def updateBeverage():
          newQueue.put((dt.timestamp(), entry[1]))
          log = Loghandler()
          logeintrag = log.GetObject(uuid)
-         logeintrag.coffee = request.args.get('productID')
-         log.submit(logeintrag)
+         if (logeintrag != None):
+             logeintrag.coffee = request.args.get('productID')
+             log.submit(logeintrag)
 
     response = Response(
         response=json.dumps(msg),
@@ -220,8 +221,9 @@ def deleteBeverage():
             msg["status"] = "True"
     log = Loghandler()
     logeintrag = log.GetObject(uuid)
-    logeintrag.errorcode = 1
-    log.submit(logeintrag)
+    if (logeintrag != None):
+        logeintrag.errorcode = 1
+        log.submit(logeintrag)
 
     response = Response(
         response=json.dumps(msg),
