@@ -16,9 +16,9 @@ example:
     log = Loghandler() #creation of the Loghandler object
     objekt = Request() #creation of the Request object
     objekt.uuid = 1 #sets the uuid of the Request object to "1"
-    objekt.toqueue = 1 #sets toqueue to 1 and the attribute toqueuetime to actual time
+    objekt.toqueue() #sets toqueue to 1 and the attribute toqueuetime to actual time
     objekt.errorcode = 1 #sets the errorcode to 1 and the errortext to "Fehler vorhanden"
-    objekt.tocustomer = 1 #sets tocustomer to 1 and the attribute tocustomertime to actual time
+    objekt.tocustomer() #sets tocustomer to 1 and the attribute tocustomertime to actual time
     log.submit(objekt) #creation (or update) of database entry
 
 """
@@ -29,10 +29,12 @@ import json
 
 class Loghandler:
     def __init__(self):
+        #creating connection to sqlite database
         self.db = sqlite3.connect('data/db.sqlite3')
         self.cursor = self.db.cursor() 
         
     def GetObject(self, uuid):
+        #this function creates an Request-Object out of a DB-entry and returns it
         self.cursor.execute('''SELECT * FROM logs WHERE uuid = ?''', (uuid,))
         result = self.cursor.fetchall() 
         
@@ -55,6 +57,7 @@ class Loghandler:
         
         
     def GetData(self, uuid):
+         #this function creates an JSON-object out of a DB-entry and returns it
         self.cursor.execute('''SELECT * FROM logs WHERE uuid = ?''', (uuid,))
         result = self.cursor.fetchall() 
         
@@ -80,16 +83,19 @@ class Loghandler:
             return(jsonresponse)
         
     def CreateDBEntry(self, uuid, toqueue, toqueuetime, tocoffeemachine, tocoffeemachinetime, tocustomer, tocustomertime, coffee, quantity, errorcode, errortext):
+        #triggered by submit-function - just triggered if there is no entry with the same uuid
         self.cursor.execute('''INSERT INTO logs(uuid, toqueue, toqueuetime, tocoffeemachine, tocoffeemachinetime, tocustomer, tocustomertime, coffee, quantity, errorcode, errortext)
                   VALUES(?,?,?,?,?,?,?,?,?,?,?)''', (uuid, toqueue, toqueuetime, tocoffeemachine, tocoffeemachinetime, tocustomer, tocustomertime, coffee, quantity, errorcode, errortext))
         self.db.commit()
 
     def UpdateDBEntry(self, uuid, toqueue, toqueuetime, tocoffeemachine, tocoffeemachinetime, tocustomer, tocustomertime, coffee, quantity, errorcode, errortext):
+        #triggered by submit-function - just triggered if there is an entry with the same uuid
         self.cursor.execute('''UPDATE logs SET uuid = ?, toqueue = ?, toqueuetime = ?, tocoffeemachine = ?, tocoffeemachinetime = ?, tocustomer = ?, tocustomertime = ?, coffee = ?, quantity = ?, errorcode = ?, errortext = ?
                   WHERE uuid = ?''', (uuid, toqueue, toqueuetime, tocoffeemachine, tocoffeemachinetime, tocustomer, tocustomertime, coffee, quantity, errorcode, errortext, uuid))
         self.db.commit()
     
     def SetTimes(self, robject):
+        #triggered by submit-function - function to set the timestamps of toqueue, tocoffeemachine and to customer. timestamp are set like ISO8601 eg. 2007-12-24T18:21Z
         try:
             self.cursor.execute('''SELECT toqueuetime FROM logs WHERE uuid = ?''', (robject.uuid,))
             toqueuetime = self.cursor.fetchall()[0][0]
@@ -112,6 +118,7 @@ class Loghandler:
         return(robject)
 
     def submit(self, robject):
+        #function to pass a Request object to the loghandler. THis function decides if it is neccessary to update or create a db entry, sets the timestamps and the errortext
         self.cursor.execute('''SELECT uuid FROM logs WHERE uuid = ?''', (robject.uuid,))
         result = self.cursor.fetchall() 
         robject = self.SetTimes(robject)
@@ -126,7 +133,6 @@ class Loghandler:
 class Request:
     def __init__(self):
         self.uuid = 0
-        self.httpobject = 0
         self.toqueue = 0
         self.toqueuetime = 0
         self.tocoffeemachine = 0
