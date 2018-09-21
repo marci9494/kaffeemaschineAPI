@@ -20,6 +20,8 @@ import requests
 import queue as Q
 from threading import Thread
 from flask_cors import CORS, cross_origin
+import urllib.request as ur
+from urllib.error import URLError, HTTPError
 
 # Set up some global variables
 num_fetch_threads = 1
@@ -74,14 +76,14 @@ def getDBInformation():
 
 # Fragt den Status der Kaffemaschine ab und liefert den als String zurück
 def get_status_from_acs():
-    req = Request(acs_status_url)
+    req = ur.Request(acs_status_url)
     status = "timeout"
     try:
-        response = urlopen(req)
-    except HTTPError as e:
+        response = ur.urlopen(req)
+    except ur.HTTPError as e:
         print('The server couldn\'t fulfill the request.')
         print('Error code: ', e.code)
-    except URLError as e:
+    except ur.URLError as e:
         print('We failed to reach the server.')
         print('Reason: ', e.reason)
     else:
